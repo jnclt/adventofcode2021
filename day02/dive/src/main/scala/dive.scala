@@ -7,19 +7,26 @@ import scala.io.Source
 
   case class Move(direction: Direction, value: Int)
 
-  def to_move(str: String): Move = {
+  def to_move(str: String): Option[Move] = {
     str.split(" ").toList match {
       case move :: value :: Nil =>
         move match {
-          case "forward" => Move(Direction.Forward, value.toInt)
-          case "up"      => Move(Direction.Up, value.toInt)
-          case "down"    => Move(Direction.Down, value.toInt)
+          case "forward" => Some(Move(Direction.Forward, value.toInt))
+          case "up"      => Some(Move(Direction.Up, value.toInt))
+          case "down"    => Some(Move(Direction.Down, value.toInt))
         }
+      case _ => None
     }
   }
 
   val moves =
-    Source.fromFile(input_path).getLines().toList.map(to_move)
+    Source
+      .fromFile(input_path)
+      .getLines()
+      .toList
+      .map(to_move)
+      .filter(_.isDefined)
+      .flatten
   println(destination_product(moves))
   println(aimed_destination_product(moves))
 
