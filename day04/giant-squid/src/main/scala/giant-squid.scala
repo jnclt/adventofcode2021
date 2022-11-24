@@ -28,14 +28,14 @@ import collection.mutable.Set
 
   def round(draw: Byte): List[Int] =
     def isWinning(board: Board): Boolean =
-      def isWinningDirection(boardDirection: List[Set[Byte]]): Boolean =
-        boardDirection
+      def isWinningOrientation(boardOrientation: List[Set[Byte]]): Boolean =
+        boardOrientation
           .map(set => {
             set.remove(draw)
             set.isEmpty
           })
           .reduce(_ || _)
-      isWinningDirection(board.rows) || isWinningDirection(board.columns)
+      isWinningOrientation(board.rows) || isWinningOrientation(board.columns)
     val (won, active) = boards.partition(isWinning)
     boards = active
     won.map(board => board.rows.flatten.map(_.toInt).sum * draw).toList
