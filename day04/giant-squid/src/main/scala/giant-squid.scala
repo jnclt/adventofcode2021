@@ -5,7 +5,7 @@ import collection.mutable.Set
 @main def giantSquid(inputPath: String): Unit =
   case class Board(rows: List[Set[Byte]], columns: List[Set[Byte]])
 
-  def parse(lines: Iterator[String]): (List[Board], List[Byte]) =
+  def parse(lines: Iterator[String]): (Set[Board], List[Byte]) =
     val draws = lines.next().split(",").map(_.toByte).toList
     lines.next()
 
@@ -21,21 +21,25 @@ import collection.mutable.Set
     def toSet(boards: List[List[List[Byte]]]): List[List[Set[Byte]]] =
       boards.map(_.map(set => Set(set*)))
 
-    val boards = toSet(rows).zip(toSet(columns)).map(pair => Board(pair._1, pair._2))
+    val boards = Set(toSet(rows).zip(toSet(columns)).map(pair => Board(pair._1, pair._2))*)
     (boards, draws)
 
-  val (boards, draws) = parse(Source.fromFile(inputPath).getLines())
+  var (boards, draws) = parse(Source.fromFile(inputPath).getLines())
 
-  def round(draw: Byte): Unit =
-    def strikeBoard(board: Board): Unit =
-      def strikeBoardDirection(boardDirection: List[Set[Byte]]): Unit =
-        boardDirection.foreach(set => {
-          set.remove(draw)
-          if set.isEmpty then
-            println(boardDirection.flatten.map(_.toInt).sum * draw)
-            sys.exit
-        })
-      strikeBoardDirection(board.rows)
-      strikeBoardDirection(board.columns)
-    boards.map(strikeBoard)
-  draws.foreach(round)
+  def round(draw: Byte): List[Int] =
+    def isWinning(board: Board): Boolean =
+      def isWinningDirection(boardDirection: List[Set[Byte]]): Boolean =
+        boardDirection
+          .map(set => {
+            set.remove(draw)
+            set.isEmpty
+          })
+          .reduce(_ || _)
+      isWinningDirection(board.rows) || isWinningDirection(board.columns)
+    val (won, active) = boards.partition(isWinning)
+    boards = active
+    won.map(board => board.rows.flatten.map(_.toInt).sum * draw).toList
+
+  val results = draws.flatMap(round)
+  println(results.head) // part1: winning board score
+  println(results.last) // part2: last board score
