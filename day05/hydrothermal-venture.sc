@@ -10,17 +10,13 @@ def hydrothermalVenture(inputPath: String): Unit =
       start.x == end.x
     def orthogonal: Boolean =
       horizontal || vertical
-    def left: Int =
-      List(start.x, end.x).min
-    def right: Int =
-      List(start.x, end.x).max
-    def top: Int =
-      List(start.y, end.y).min
-    def bottom: Int =
-      List(start.y, end.y).max
+    def steps(coord: Point => Int): List[Int] =
+      val step = if coord(start) <= coord(end) then 1 else -1
+      List.range(coord(start), coord(end) + step, step)
     def points: List[Point] =
-      if horizontal then List.range(left, right + 1).map(x => Point(x, top))
-      else List.range(top, bottom + 1).map(y => Point(left, y))
+      if horizontal then steps(_.x).map(x => Point(x, start.y))
+      else if vertical then steps(_.y).map(y => Point(start.x, y))
+      else steps(_.x).zip(steps(_.y)).map(p => Point(p._1, p._2))
 
   def parse(lines: Iterator[String]): List[Line] =
     val coords = """^(\d+),(\d+) -> (\d+),(\d+)$""".r
@@ -31,16 +27,18 @@ def hydrothermalVenture(inputPath: String): Unit =
             Line(Point(sx.toInt, sy.toInt), Point(ex.toInt, ey.toInt))
       )
       .toList
-  val lines = parse(Source.fromFile(inputPath).getLines())
 
-  val hotspotCount = lines
-    .filter(_.orthogonal)
-    .flatMap(_.points)
-    .groupBy[Point](identity)
-    .values
-    .map(_.size)
-    .filter(_.>=(2))
-    .size
-  println(hotspotCount)
+  def hotspotCount(lines: List[Line]): Int =
+    lines
+      .flatMap(_.points)
+      .groupBy[Point](identity)
+      .values
+      .map(_.size)
+      .filter(_.>=(2))
+      .size
+
+  val lines = parse(Source.fromFile(inputPath).getLines())
+  println(hotspotCount(lines.filter(_.orthogonal)))
+  println(hotspotCount(lines))
 
 hydrothermalVenture(args(0))
